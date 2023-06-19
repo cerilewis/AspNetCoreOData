@@ -25,7 +25,7 @@ namespace Microsoft.AspNetCore.OData.Query.Expressions
     /// <summary>
     /// The helper class for all expression binders.
     /// </summary>
-    internal static class ExpressionBinderHelper
+    public static class ExpressionBinderHelper
     {
         private static readonly MethodInfo StringCompareMethodInfo = typeof(string).GetMethod("Compare", new[] { typeof(string), typeof(string) });
         private static readonly MethodInfo GuidCompareMethodInfo = typeof(Guid).GetMethod("CompareTo", new[] { typeof(Guid) });
@@ -100,8 +100,10 @@ namespace Microsoft.AspNetCore.OData.Query.Expressions
             if ((IsType<DateOnly>(leftUnderlyingType) && IsDate(rightUnderlyingType)) ||
                 (IsDate(leftUnderlyingType) && IsType<DateOnly>(rightUnderlyingType)))
             {
-                left = CreateDateBinaryExpression(left, querySettings);
-                right = CreateDateBinaryExpression(right, querySettings);
+                // left = CreateDateBinaryExpression(left, querySettings);
+                // right = CreateDateBinaryExpression(right, querySettings);
+                left = CreateDateOnlyExpression(left, querySettings);
+                right = CreateDateOnlyExpression(right, querySettings);
             }
             else if((IsType<TimeOnly>(leftUnderlyingType) && IsTimeOfDay(rightUnderlyingType)) ||
                 (IsTimeOfDay(leftUnderlyingType) && IsType<TimeOnly>(rightUnderlyingType)))
@@ -409,6 +411,40 @@ namespace Microsoft.AspNetCore.OData.Query.Expressions
 
             return source;
         }
+
+#if NET6_0
+        public static Expression CreateDateOnlyExpression(Expression expression, ODataQuerySettings settings)
+        {
+            if (expression.Type == typeof(DateOnly) || Nullable.GetUnderlyingType(expression.Type) == typeof(DateOnly))
+                return expression;
+                
+            var unaryExpression = expression as UnaryExpression;
+            if (unaryExpression != null)
+            {
+                if (Nullable.GetUnderlyingType(unaryExpression.Type) == unaryExpression.Operand.Type)
+                {
+                    // this is a cast from T to Nullable<T> which is redundant.
+                    expression = unaryExpression.Operand;
+                }
+            }
+            
+            var parameterizedConstantValue = ExtractParameterizedConstant(expression);
+
+            if (parameterizedConstantValue is Date dto)
+            {
+                if (settings.EnableConstantParameterization)
+                {
+                    return LinqParameterContainer.Parameterize(typeof(DateOnly), new DateOnly(dto.Year, dto.Month, dto.Day));
+                }
+                else
+                {
+                    return Expression.Constant(new DateOnly(dto.Year, dto.Month, dto.Day), typeof(DateOnly));
+                }
+            }
+            
+            return expression;
+        }
+#endif
 
         private static Expression CreateDateBinaryExpression(Expression source, ODataQuerySettings querySettings)
         {
