@@ -1102,20 +1102,6 @@
             <param name="clrType">The type to test.</param>
             <returns>True if the type is a DateTime; false otherwise.</returns>
         </member>
-        <member name="M:Microsoft.AspNetCore.OData.Common.TypeHelper.IsDateOnly(System.Type)">
-            <summary>
-            Determine if a type is a <see cref="T:System.DateOnly"/>.
-            </summary>
-            <param name="clrType">The type to test.</param>
-            <returns>True if the type is a DateOnly; false otherwise.</returns>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Common.TypeHelper.IsTimeOnly(System.Type)">
-            <summary>
-            Determine if a type is a <see cref="T:System.TimeOnly"/>.
-            </summary>
-            <param name="clrType">The type to test.</param>
-            <returns>True if the type is a TimeOnly; false otherwise.</returns>
-        </member>
         <member name="M:Microsoft.AspNetCore.OData.Common.TypeHelper.IsTimeSpan(System.Type)">
             <summary>
             Determine if a type is a TimeSpan.
@@ -2134,7 +2120,7 @@
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Edm.EdmHelpers.IsStructuredOrUntyped(Microsoft.OData.Edm.IEdmTypeReference)">
             <summary>
-            Tests wheather a <see cref="T:Microsoft.OData.Edm.IEdmTypeReference"/> is 'Edm.Untyped' or 'Collection(Edm.Untyped)'.
+            Tests whether a <see cref="T:Microsoft.OData.Edm.IEdmTypeReference"/> is 'Edm.Untyped' or 'Collection(Edm.Untyped)'.
             </summary>
             <param name="edmTypeReference">The test type reference.</param>
             <returns>True/false.</returns>
@@ -2162,7 +2148,7 @@
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Edm.EdmHelpers.GetElementType(Microsoft.OData.Edm.IEdmTypeReference)">
             <summary>
-            Get the elementType if it's collection or return itself's type
+            Get the elementType if it's collection or return itself
             </summary>
             <param name="edmTypeReference">The test type reference.</param>
             <returns>Element type or itself.</returns>
@@ -2265,7 +2251,7 @@
             <param name="entityType">The Edm entity type.</param>
             <returns>Alternate Keys of this type.</returns>
         </member>
-        <member name="M:Microsoft.AspNetCore.OData.Edm.EdmModelExtensions.ResolveResouceSetType(Microsoft.OData.Edm.IEdmModel,Microsoft.OData.ODataResourceSetBase)">
+        <member name="M:Microsoft.AspNetCore.OData.Edm.EdmModelExtensions.ResolveResourceSetType(Microsoft.OData.Edm.IEdmModel,Microsoft.OData.ODataResourceSetBase)">
             <summary>
             Resolve the type reference from the type name of <see cref="T:Microsoft.OData.ODataResourceSetBase"/>
             </summary>
@@ -4309,6 +4295,15 @@
             <returns>A new <see cref="T:Microsoft.AspNetCore.OData.Formatter.ResourceSetContext"/>.</returns>
             <remarks>This signature uses types that are AspNetCore-specific.</remarks>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.ResourceSetContext.Create(Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext,System.Collections.Generic.IAsyncEnumerable{System.Object})">
+            <summary>
+            Create a <see cref="T:Microsoft.AspNetCore.OData.Formatter.ResourceSetContext"/> from an <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext"/> and <see cref="T:System.Collections.Generic.IAsyncEnumerable`1"/>.
+            </summary>
+            <param name="writeContext">The serializer context.</param>
+            <param name="resourceSetInstance">The instance representing the resourceSet being written.</param>
+            <returns>A new <see cref="T:Microsoft.AspNetCore.OData.Formatter.ResourceSetContext"/>.</returns>
+            <remarks>This signature uses types that are AspNetCore-specific.</remarks>
+        </member>
         <member name="T:Microsoft.AspNetCore.OData.Formatter.Serialization.IODataEdmTypeSerializer">
             <summary>
             Represents an <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.IODataSerializer"/> that serializes instances of objects backed by an <see cref="T:Microsoft.OData.Edm.IEdmType"/>.
@@ -4764,6 +4759,14 @@
             <returns>The nested resource info to be written. Returns 'null' will omit this untyped serialization.</returns>
             <remarks>It enables customer to get more control by overriding this method. </remarks>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.ShouldWriteNavigation(Microsoft.OData.ODataNestedResourceInfo,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
+            <summary>
+            Checks whether a navigation link should be written or not. 
+            </summary>
+            <param name="navigationLink">The navigation link to be written</param>
+            <param name="resourceContext">The resource context for the resource whose navigation link is being written.</param>
+            <returns>true if navigation link should be written; otherwise false.</returns>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.CreateDynamicComplexNestedResourceInfo(System.String,System.Object,Microsoft.OData.Edm.IEdmTypeReference,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
             <summary>
             Creates the <see cref="T:Microsoft.OData.ODataNestedResourceInfo"/> to be written while writing this dynamic complex property.
@@ -4914,9 +4917,27 @@
             <param name="writeContext">The serializer context.</param>
             <returns>The created <see cref="T:Microsoft.OData.ODataResourceSet"/> object.</returns>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSetSerializer.CreateResourceSet(System.Collections.Generic.IAsyncEnumerable{System.Object},Microsoft.OData.Edm.IEdmCollectionTypeReference,Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
+            <summary>
+            Create the <see cref="T:Microsoft.OData.ODataResourceSet"/> to be written for the given resourceSet instance.
+            </summary>
+            <param name="resourceSetInstance">The instance representing the resourceSet being written.</param>
+            <param name="resourceSetType">The EDM type of the resourceSet being written.</param>
+            <param name="writeContext">The serializer context.</param>
+            <returns>The created <see cref="T:Microsoft.OData.ODataResourceSet"/> object.</returns>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSetSerializer.GetNextLinkGenerator(Microsoft.OData.ODataResourceSetBase,System.Collections.IEnumerable,Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
             <summary>
             Creates a function that takes in an object and generates nextlink uri.
+            </summary>
+            <param name="resourceSet">The resource set describing a collection of structured objects.</param>
+            <param name="resourceSetInstance">The instance representing the resourceSet being written.</param>
+            <param name="writeContext">The serializer context.</param>
+            <returns>The function that generates the NextLink from an object.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSetSerializer.GetNextLinkGenerator(Microsoft.OData.ODataResourceSetBase,System.Collections.Generic.IAsyncEnumerable{System.Object},Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
+            <summary>
+            Creates a function that takes in an object and generates a nextlink uri.
             </summary>
             <param name="resourceSet">The resource set describing a collection of structured objects.</param>
             <param name="resourceSetInstance">The instance representing the resourceSet being written.</param>
@@ -8835,12 +8856,6 @@
             Flattened list of properties from base query, for case when binder is applied for aggregated query.
             </summary>
         </member>
-        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.ExpressionBinderBase.#ctor(System.IServiceProvider)">
-            <summary>
-            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Query.Expressions.ExpressionBinderBase"/> class.
-            </summary>
-            <param name="requestContainer">The request container.</param>
-        </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.ExpressionBinderBase.Bind(Microsoft.OData.UriParser.QueryNode)">
             <summary>
             Binds a <see cref="T:Microsoft.OData.UriParser.QueryNode"/> to create a LINQ <see cref="T:System.Linq.Expressions.Expression"/> that represents the semantics
@@ -9530,6 +9545,12 @@
             All parameters present in current context.
             </summary>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext" /> class.
+            For unit-test only
+            </summary>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext.#ctor(Microsoft.OData.Edm.IEdmModel,Microsoft.AspNetCore.OData.Query.ODataQuerySettings,System.Type)">
             <summary>
             Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext" /> class.
@@ -9841,7 +9862,7 @@
         </member>
         <member name="T:Microsoft.AspNetCore.OData.Query.HttpRequestODataQueryExtensions">
             <summary>
-            
+            Extensions for ETag.
             </summary>
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.HttpRequestODataQueryExtensions.GetETag(Microsoft.AspNetCore.Http.HttpRequest,Microsoft.Net.Http.Headers.EntityTagHeaderValue)">
@@ -13926,6 +13947,11 @@
             Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Routing.ODataRouteOptions" /> class.
             </summary>
         </member>
+        <member name="P:Microsoft.AspNetCore.OData.Routing.ODataRouteOptions.Order">
+            <summary>
+            Gets or sets the route order in conventional routing.
+            </summary>
+        </member>
         <member name="P:Microsoft.AspNetCore.OData.Routing.ODataRouteOptions.EnableDollarCountRouting">
             <summary>
             Gets/sets a value indicating whether to enable $count in conventional routing.
@@ -15198,6 +15224,22 @@
             <summary>
             Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Routing.Template.ValueSegmentTemplate" /> class.
             </summary>
+            <param name="segment">The value segment.</param>
+        </member>
+        <member name="P:Microsoft.AspNetCore.OData.Routing.Template.ValueSegmentTemplate.Segment">
+            <summary>
+            Gets the value segment.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Routing.Template.ValueSegmentTemplate.GetTemplates(Microsoft.AspNetCore.OData.Routing.ODataRouteOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Routing.Template.ValueSegmentTemplate.TryTranslate(Microsoft.AspNetCore.OData.Routing.Template.ODataTemplateTranslateContext)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>
+ummary>
             <param name="segment">The value segment.</param>
         </member>
         <member name="P:Microsoft.AspNetCore.OData.Routing.Template.ValueSegmentTemplate.Segment">

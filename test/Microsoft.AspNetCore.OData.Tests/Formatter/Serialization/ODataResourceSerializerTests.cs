@@ -7,7 +7,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.OData.Abstracts;
@@ -20,6 +23,7 @@ using Microsoft.AspNetCore.OData.Tests.Commons;
 using Microsoft.AspNetCore.OData.Tests.Edm;
 using Microsoft.AspNetCore.OData.Tests.Extensions;
 using Microsoft.AspNetCore.OData.Tests.Models;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OData;
@@ -318,8 +322,11 @@ namespace Microsoft.AspNetCore.OData.Tests.Formatter.Serialization
             serializer.Setup(s => s.CreateNavigationLink(selectExpandNode.SelectedNavigationProperties.ElementAt(0), It.IsAny<ResourceContext>())).Verifiable();
             serializer.Setup(s => s.CreateNavigationLink(selectExpandNode.SelectedNavigationProperties.ElementAt(1), It.IsAny<ResourceContext>())).Verifiable();
 
+            ODataSerializerContext writeContext = new ODataSerializerContext() { NavigationSource = _customerSet, Model = _model, Path = _path };
+            writeContext.MetadataLevel = ODataMetadataLevel.Full;
+
             // Act
-            await serializer.Object.WriteObjectInlineAsync(_customer, _customerType, writer.Object, _writeContext);
+            await serializer.Object.WriteObjectInlineAsync(_customer, _customerType, writer.Object, writeContext);
 
             // Assert
             serializer.Verify();
@@ -356,8 +363,11 @@ namespace Microsoft.AspNetCore.OData.Tests.Formatter.Serialization
             writer.Setup(w => w.WriteStartAsync(navigationLinks[0])).Verifiable();
             writer.Setup(w => w.WriteStartAsync(navigationLinks[1])).Verifiable();
 
+            ODataSerializerContext writeContext = new ODataSerializerContext() { NavigationSource = _customerSet, Model = _model, Path = _path };
+            writeContext.MetadataLevel = ODataMetadataLevel.Full;
+
             // Act
-            await serializer.Object.WriteObjectInlineAsync(_customer, _customerType, writer.Object, _writeContext);
+            await serializer.Object.WriteObjectInlineAsync(_customer, _customerType, writer.Object, writeContext);
 
             // Assert
             writer.Verify();
@@ -710,7 +720,19 @@ namespace Microsoft.AspNetCore.OData.Tests.Formatter.Serialization
         }
 
         [Fact]
-        public void CreateResource_Calls_CreateComputedProperty_ForEachSelecteComputedProperty()
+        public void CreateComputedProperty_ThrowsArgumentNull_ForInputs()
+        {
+            // Arrange
+            Mock<IODataSerializerProvider> serializerProvider = new Mock<IODataSerializerProvider>();
+            ODataResourceSerializer serializer = new ODataResourceSerializer(serializerProvider.Object);
+
+            // Act & Assert
+            ExceptionAssert.ThrowsArgumentNullOrEmpty(() => serializer.CreateComputedProperty(null, null), "propertyName");
+            ExceptionAssert.ThrowsArgumentNull(() => serializer.CreateComputedProperty("any", null), "resourceContext");
+        }
+
+        [Fact]
+        public void CreateResource_Calls_CreateComputedProperty_ForEachSelectComputedProperty()
         {
             // Arrange
             SelectExpandNode selectExpandNode = new SelectExpandNode();
@@ -794,7 +816,7 @@ namespace Microsoft.AspNetCore.OData.Tests.Formatter.Serialization
         }
 
         [Fact]
-        public void CreateResource_SetsETagToNull_IfModelDontHaveConcurrencyProperty()
+        public void CreateResource_SetsETagToNull_IfModelNotHaveConcurrencyProperty()
         {
             // Arrange
             IEdmEntitySet orderSet = _model.EntityContainer.FindEntitySet("Orders");
@@ -2250,6 +2272,78 @@ namespace Microsoft.AspNetCore.OData.Tests.Formatter.Serialization
         }
 
         [Fact]
+        public async Task WriteObjectInlineAsync_Writes_Nested_Entities_Without_NavigationSource()
+        {
+            // Arrange
+            ODataModelBuilder builder = new ODataConventionModelBuilder();
+            builder.Namespace = "Default";
+            builder.EntityType<Product>();
+            builder.ComplexType<Result>();
+            var model = builder.GetEdmModel();
+
+            var result = new Result
+            {
+                Title = "myResult",
+                Products = new Product[]
+                {
+                    new Product
+                    {
+                        ProductID = 1
+                    },
+                    new Product
+                    {
+                        ProductID = 2
+                    }
+                }
+            };
+
+            var resultType = model.FindType("Default.Result") as IEdmComplexType;
+            var resultTypeReference = new EdmComplexTypeReference(resultType as IEdmComplexType, false);
+            var titleProperty = resultTypeReference.FindProperty("Title") as IEdmStructuralProperty;
+            var productsProperty = resultTypeReference.FindNavigationProperty("Products");
+            var selectExpand = new SelectExpandClause(new SelectItem[]
+                {
+                    new PathSelectItem(new ODataSelectPath(new PropertySegment(titleProperty))),
+                    new ExpandedNavigationSelectItem(new ODataExpandPath(new NavigationPropertySegment(productsProperty, null)),null,null)
+                },
+             false);
+
+            var writeContext = new ODataSerializerContext()
+            {
+                Model = model,
+                SelectExpandClause = selectExpand
+            };
+
+            using (var stream = new MemoryStream())
+            {
+                IODataResponseMessage responseMessage = new ODataMessageWrapper(stream);
+                ODataUri uri = new ODataUri { ServiceRoot = new Uri("http://myService", UriKind.Absolute) };
+                ODataMessageWriterSettings settings = new ODataMessageWriterSettings
+                {
+                    ODataUri = uri
+                };
+
+                using (ODataMessageWriter messageWriter = new ODataMessageWriter(responseMessage, settings))
+                {
+                    ODataWriter writer = await messageWriter.CreateODataResourceWriterAsync(null, resultType as IEdmComplexType);
+                    ODataResourceSerializer serializer = new ODataResourceSerializer(_serializerProvider);
+
+                    // Act
+                    await serializer.WriteObjectInlineAsync(result, resultTypeReference, writer, writeContext);
+
+                    // Assert
+                    stream.Position = 0;
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        string response = reader.ReadToEnd();
+                        Assert.Contains(@"""ProductID"":1", response);
+                        Assert.Contains(@"""ProductID"":2", response);
+                    }
+                }
+            }
+        }
+
+        [Fact]
         public void CreateSelectExpandNode_Caches_SelectExpandNode()
         {
             // Arrange
@@ -2485,6 +2579,12 @@ namespace Microsoft.AspNetCore.OData.Tests.Formatter.Serialization
             public string Name { get; set; }
             public string Shipment { get; set; }
             public Customer Customer { get; set; }
+        }
+
+        private class Result
+        {
+            public string Title { get; set; }
+            public IList<Product> Products { get; set; }
         }
 
         private class SpecialOrder

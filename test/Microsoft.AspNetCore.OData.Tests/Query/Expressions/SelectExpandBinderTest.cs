@@ -8,12 +8,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Xml.Linq;
 using Microsoft.AspNetCore.OData.Edm;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Container;
@@ -34,21 +34,35 @@ namespace Microsoft.AspNetCore.OData.Tests.Query.Expressions
         private static IPropertyMapper PropertyMapper = new IdentityPropertyMapper();
 
         private readonly SelectExpandBinder _binder;
+        private readonly SelectExpandBinder _binder_lowerCamelCased;
         private readonly IQueryable<QueryCustomer> _queryable;
+        private readonly IQueryable<QueryCustomer> _queryable_lowerCamelCased;
         private readonly ODataQueryContext _context;
+        private readonly ODataQueryContext _context_lowerCamelCased;
         private readonly ODataQuerySettings _settings;
+        private readonly ODataQuerySettings _settings_lowerCamelCased;
         private readonly QueryBinderContext _queryBinderContext;
+        private readonly QueryBinderContext _queryBinderContext_lowerCamelCased;
 
         private readonly IEdmModel _model;
+        private readonly IEdmModel _model_lowerCamelCased;
         private readonly IEdmEntityType _customer;
+        private readonly IEdmEntityType _customer_lowerCamelCased;
         private readonly IEdmEntityType _order;
+        private readonly IEdmEntityType _order_lowerCamelCased;
         private readonly IEdmEntityType _product;
+        private readonly IEdmEntityType _product_lowerCamelCased;
         private readonly IEdmEntitySet _customers;
+        private readonly IEdmEntitySet _customers_lowerCamelCased;
         private readonly IEdmEntitySet _orders;
+        private readonly IEdmEntitySet _orders_lowerCamelCased;
         private readonly IEdmEntitySet _products;
+        private readonly IEdmEntitySet _products_lowerCamelCased;
 
         public SelectExpandBinderTest()
         {
+            #region PascalCase EdmModel
+
             _model = GetEdmModel();
             _customer = _model.SchemaElements.OfType<IEdmEntityType>().First(c => c.Name == "QueryCustomer");
             _order = _model.SchemaElements.OfType<IEdmEntityType>().First(c => c.Name == "QueryOrder");
@@ -65,7 +79,7 @@ namespace Microsoft.AspNetCore.OData.Tests.Query.Expressions
             {
                 Orders = new List<QueryOrder>()
             };
-            QueryOrder order = new QueryOrder { Customer = customer };
+            QueryOrder order = new QueryOrder { Id = 42, Title = "The order", Customer = customer };
             customer.Orders.Add(order);
 
             _queryable = new[] { customer }.AsQueryable();
@@ -76,6 +90,40 @@ namespace Microsoft.AspNetCore.OData.Tests.Query.Expressions
             {
                 NavigationSource = _context.NavigationSource
             };
+
+            #endregion
+
+            #region camelCase EdmModel
+
+            _model_lowerCamelCased = GetEdmModel_lowerCamelCased();
+            _customer_lowerCamelCased = _model_lowerCamelCased.SchemaElements.OfType<IEdmEntityType>().First(c => c.Name == "QueryCustomer");
+            _order_lowerCamelCased = _model_lowerCamelCased.SchemaElements.OfType<IEdmEntityType>().First(c => c.Name == "QueryOrder");
+            _product_lowerCamelCased = _model_lowerCamelCased.SchemaElements.OfType<IEdmEntityType>().First(c => c.Name == "QueryProduct");
+            _customers_lowerCamelCased = _model_lowerCamelCased.EntityContainer.FindEntitySet("Customers");
+            _orders_lowerCamelCased = _model_lowerCamelCased.EntityContainer.FindEntitySet("Orders");
+            _products_lowerCamelCased = _model_lowerCamelCased.EntityContainer.FindEntitySet("Products");
+
+            _settings_lowerCamelCased = new ODataQuerySettings { HandleNullPropagation = HandleNullPropagationOption.False };
+            _context_lowerCamelCased = new ODataQueryContext(_model_lowerCamelCased, typeof(QueryCustomer)) { RequestContainer = new MockServiceProvider() };
+            _binder_lowerCamelCased = new SelectExpandBinder(new FilterBinder(), new OrderByBinder());
+
+            QueryCustomer customer_lowerCamelCased = new QueryCustomer
+                {
+                    Orders = new List<QueryOrder>()
+                };
+            QueryOrder order_lowerCamelCased = new QueryOrder { Id = 42, Title = "The order", Customer = customer_lowerCamelCased };
+            customer_lowerCamelCased.Orders.Add(order_lowerCamelCased);
+
+            _queryable_lowerCamelCased = new[] { customer_lowerCamelCased }.AsQueryable();
+
+            SelectExpandQueryOption selectExpandQueryOption_lowerCamelCased = new SelectExpandQueryOption("Orders", expand: null, context: _context_lowerCamelCased);
+
+            _queryBinderContext_lowerCamelCased = new QueryBinderContext(_model_lowerCamelCased, _settings_lowerCamelCased, selectExpandQueryOption_lowerCamelCased.Context.ElementClrType)
+                {
+                    NavigationSource = _context_lowerCamelCased.NavigationSource
+                };
+
+            #endregion
         }
 
         private static SelectExpandBinder GetBinder<T>(IEdmModel model, HandleNullPropagationOption nullPropagation = HandleNullPropagationOption.False)
@@ -1954,6 +2002,19 @@ namespace Microsoft.AspNetCore.OData.Tests.Query.Expressions
             return builder.GetEdmModel();
         }
 
+        public static IEdmModel GetEdmModel_lowerCamelCased()
+        {
+            var builder = new ODataConventionModelBuilder();
+            var customer = builder.EntitySet<QueryCustomer>("Customers").EntityType;
+            builder.EntitySet<QueryOrder>("Orders");
+            builder.EntitySet<QueryCity>("Cities");
+            builder.EntitySet<QueryProduct>("Products");
+
+            customer.Collection.Function("IsUpgraded").Returns<bool>().Namespace="NS";
+            customer.Collection.Action("UpgradeAll").Namespace = "NS";
+            builder.EnableLowerCamelCase();
+            return builder.GetEdmModel();
+        }
         public static SelectExpandClause ParseSelectExpand(string select, string expand, IEdmModel model, IEdmType edmType, IEdmNavigationSource navigationSource)
         {
             return new ODataQueryOptionParser(model, edmType, navigationSource,
@@ -2085,6 +2146,26 @@ namespace Microsoft.AspNetCore.OData.Tests.Query.Expressions
         public QueryOrder PrivateOrder { get; set; }
 
         public IList<QueryOrder> Orders { get; set; }
+
+        public List<string> TestReadonlyProperty
+        {
+            get { return new List<string>() { "Test1", "Test2" }; }
+        }
+
+        [ReadOnly(true)]
+        public int TestReadOnlyWithAttribute
+        {
+            get
+            {
+                return 2;
+            }
+        }
+
+        [ReadOnly(true)]
+        public int TestReadOnlyWithAttributeAndSetter
+        {
+            get; set;
+        }
 
         public IDictionary<string, object> CustomerProperties { get; set; }
     }

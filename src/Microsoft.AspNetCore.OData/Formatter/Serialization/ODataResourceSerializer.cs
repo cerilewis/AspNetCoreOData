@@ -25,7 +25,6 @@ using NavigationSourceLinkBuilderAnnotation = Microsoft.AspNetCore.OData.Edm.Nav
 using Microsoft.AspNetCore.OData.Common;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.OData.Deltas;
-using System.Xml.Linq;
 
 namespace Microsoft.AspNetCore.OData.Formatter.Serialization
 {
@@ -143,7 +142,8 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
                 {
                     await writer.WriteStartAsync(resource).ConfigureAwait(false);
                     await WriteDeltaComplexPropertiesAsync(selectExpandNode, resourceContext, writer).ConfigureAwait(false);
-                    await WriteDeltaNavigationPropertiesAsync(selectExpandNode, resourceContext, writer);
+                    await WriteDynamicComplexPropertiesAsync(resourceContext, writer).ConfigureAwait(false);
+                    await WriteDeltaNavigationPropertiesAsync(selectExpandNode, resourceContext, writer).ConfigureAwait(false);
                     await writer.WriteEndAsync().ConfigureAwait(false);
                 }
             }
@@ -581,7 +581,18 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
 
             if (resourceContext.StructuredType.TypeKind == EdmTypeKind.Entity && resourceContext.NavigationSource != null)
             {
-                if (!(resourceContext.NavigationSource is IEdmContainedEntitySet))
+                // Condition 1. If resourceContext.NavigationSource is a contained entity set
+                //    and a contained resource is being written, the id/read/edit links can be derived
+                //    from the entity set or parent resource, i.e., no need to use link builder to build the links.
+                // Condition 2. If resourceContext.NavigationSource is a contained entity set
+                //    but an expanded non-contained resource is being written,
+                //    deriving the id/read/edit links from the entity set or parent resource will
+                //    most likely result into invalid links.
+                //    A navigation property binding should exist and we should try
+                //    to use the navigation link builder to build the links.
+                // NOTE: resourceContext.SerializerContext.NavigationProperty will not be null when writing an expanded resource
+                if (!(resourceContext.NavigationSource is IEdmContainedEntitySet)
+                    || resourceContext.SerializerContext.NavigationProperty?.ContainsTarget == false)
                 {
                     IEdmModel model = resourceContext.SerializerContext.Model;
                     NavigationSourceLinkBuilderAnnotation linkBuilder = EdmModelLinkBuilderExtensions.GetNavigationSourceLinkBuilder(model, resourceContext.NavigationSource);
@@ -638,6 +649,7 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
 
             IEdmStructuredType structuredType = resourceContext.StructuredType;
             IEdmStructuredObject structuredObject = resourceContext.EdmObject;
+            ODataSerializerContext serializierContext = resourceContext.SerializerContext;
             object value;
             IDelta delta = structuredObject as IDelta;
             if (structuredObject is EdmUntypedObject untypedObject) // NO CLR, NO EDM
@@ -700,10 +712,25 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
                     continue;
                 }
 
-                IEdmTypeReference edmTypeReference = resourceContext.SerializerContext.GetEdmType(dynamicPropertyValue,
-                    dynamicPropertyValue.GetType(), true);
+                Type propertyType = dynamicPropertyValue.GetType();
+                IEdmTypeReference edmTypeReference = serializierContext.GetEdmType(dynamicPropertyValue, propertyType, true);
                 if (edmTypeReference == null || edmTypeReference.IsStructuredOrUntyped())
                 {
+                    if (TypeHelper.IsEnum(propertyType))
+                    {
+                        // we don't have the Edm enum type in the model, let's write it as string.
+                        dynamicProperties.Add(new ODataProperty
+                        {
+                            Name = dynamicProperty.Key,
+
+                            // TBD: Shall we write the un-declared enum value as full-name string?
+                            // So, "Data":"Apple"  => should be ""Data":"Namespace.EnumTypeName.Apple" ?
+                            Value = dynamicPropertyValue.ToString()
+                        });
+
+                        continue;
+                    }
+
                     resourceContext.AppendDynamicOrUntypedProperty(dynamicProperty.Key, dynamicPropertyValue);
                 }
                 else
@@ -716,7 +743,7 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
                     }
 
                     dynamicProperties.Add(propertySerializer.CreateProperty(
-                        dynamicPropertyValue, edmTypeReference, dynamicProperty.Key, resourceContext.SerializerContext));
+                        dynamicPropertyValue, edmTypeReference, dynamicProperty.Key, serializierContext));
                 }
             }
 
@@ -759,7 +786,10 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
                     properties.Add(etagProperty.Name, resourceContext.GetPropertyValue(etagProperty.Name));
                 }
 
-                return resourceContext.Request.CreateETag(properties, resourceContext.TimeZone);
+                if (properties.Count != 0)
+                {
+                    return resourceContext.Request.CreateETag(properties, resourceContext.TimeZone);
+                }
             }
 
             return null;
@@ -1097,11 +1127,27 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
             foreach (IEdmNavigationProperty navProperty in navigationProperties)
             {
                 ODataNestedResourceInfo navigationLink = CreateNavigationLink(navProperty, resourceContext);
-                if (navigationLink != null)
+                if (ShouldWriteNavigation(navigationLink, resourceContext))
                 {
                     yield return navigationLink;
                 }
             }
+        }
+
+        /// <summary>
+        /// Checks whether a navigation link should be written or not. 
+        /// </summary>
+        /// <param name="navigationLink">The navigation link to be written.</param>
+        /// <param name="resourceContext">The resource context for the resource whose navigation link is being written.</param>
+        /// <returns>true if navigation link should be written; otherwise false.</returns>
+        protected virtual bool ShouldWriteNavigation(ODataNestedResourceInfo navigationLink, ResourceContext resourceContext) 
+        {
+            if (navigationLink?.Url != null || (navigationLink != null && resourceContext.SerializerContext.MetadataLevel == ODataMetadataLevel.Full))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -1179,22 +1225,25 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
             IEdmNavigationSource navigationSource = writeContext.NavigationSource;
             ODataNestedResourceInfo navigationLink = null;
 
-            if (navigationSource != null && navigationProperty.Type != null)
+            if (navigationProperty.Type != null)
             {
                 IEdmTypeReference propertyType = navigationProperty.Type;
-                IEdmModel model = writeContext.Model;
-                NavigationSourceLinkBuilderAnnotation linkBuilder = EdmModelLinkBuilderExtensions.GetNavigationSourceLinkBuilder(model, navigationSource);
-                Uri navigationUrl = linkBuilder.BuildNavigationLink(resourceContext, navigationProperty, writeContext.MetadataLevel);
-
                 navigationLink = new ODataNestedResourceInfo
                 {
                     IsCollection = propertyType.IsCollection(),
                     Name = navigationProperty.Name,
                 };
 
-                if (navigationUrl != null)
+                if (navigationSource != null)
                 {
-                    navigationLink.Url = navigationUrl;
+                    IEdmModel model = writeContext.Model;
+                    NavigationSourceLinkBuilderAnnotation linkBuilder = EdmModelLinkBuilderExtensions.GetNavigationSourceLinkBuilder(model, navigationSource);
+                    Uri navigationUrl = linkBuilder.BuildNavigationLink(resourceContext, navigationProperty, writeContext.MetadataLevel);
+
+                    if (navigationUrl != null)
+                    {
+                        navigationLink.Url = navigationUrl;
+                    }
                 }
             }
 
@@ -1206,7 +1255,9 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
             Contract.Assert(selectExpandNode != null);
             Contract.Assert(resourceContext != null);
 
-            List<ODataProperty> properties = new List<ODataProperty>();
+            int propertiesCount = (selectExpandNode.SelectedStructuralProperties?.Count ?? 0) + (selectExpandNode.SelectedComputedProperties?.Count ?? 0);
+            List<ODataProperty> properties = new List<ODataProperty>(propertiesCount);
+
             if (selectExpandNode.SelectedStructuralProperties != null)
             {
                 IEnumerable<IEdmStructuralProperty> structuralProperties = selectExpandNode.SelectedStructuralProperties;
@@ -1385,8 +1436,23 @@ namespace Microsoft.AspNetCore.OData.Formatter.Serialization
             // 1) If we can get EdmType from model, Let's use it.
             // 2) If no (aka, we don't have an Edm type associated). So, let's treat it a Untyped.
             actualType = writeContext.GetEdmType(propertyValue, propertyType, true);
+
             if (actualType.IsStructuredOrUntyped())
             {
+                if (TypeHelper.IsEnum(propertyType))
+                {
+                    // we don't have the Edm enum type in the model, let's write it as string.
+                    return new ODataProperty
+                    {
+                        Name = structuralProperty.Name,
+
+                        // Shall we write the un-declared enum value as full-name string?
+                        // So, "Data":"Apple"  => should be ""Data":"Namespace.EnumTypeName.Apple" ?
+                        // We keep it simple to write it as string (enum member name), not the full-name string.
+                        Value = propertyValue.ToString()
+                    };
+                }
+
                 return propertyValue;
             }
 

@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -39,6 +38,11 @@ namespace Microsoft.AspNetCore.OData.Query.Expressions
             if (query == null)
             {
                 throw Error.ArgumentNull(nameof(query));
+            }
+
+            if (filterClause == null)
+            {
+                throw Error.ArgumentNull(nameof(filterClause));
             }
 
             if (context == null)
@@ -165,8 +169,6 @@ namespace Microsoft.AspNetCore.OData.Query.Expressions
             {
                 throw Error.ArgumentNull(nameof(context));
             }
-
-            context.EnsureFlattenedProperties(context.CurrentParameter, query);
 
             OrderByBinderResult orderByResult = binder.BindOrderBy(orderByClause, context);
             IQueryable querySoFar = query;
