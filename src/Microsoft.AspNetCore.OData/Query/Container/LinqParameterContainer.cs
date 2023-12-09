@@ -13,7 +13,7 @@ using System.Reflection;
 namespace Microsoft.AspNetCore.OData.Query.Container
 {
     // wraps a constant value so that EntityFramework parametrizes the constant.
-    internal abstract class LinqParameterContainer
+    public abstract class LinqParameterContainer
     {
         private static ConcurrentDictionary<Type, Func<object, LinqParameterContainer>> _ctors = new ConcurrentDictionary<Type, Func<object, LinqParameterContainer>>();
 
@@ -53,7 +53,7 @@ namespace Microsoft.AspNetCore.OData.Query.Container
 
         // having a strongly typed property avoids the a cast in the property access expression that would be 
         // generated for this constant.
-        internal class TypedLinqParameterContainer<T> : LinqParameterContainer
+        public class TypedLinqParameterContainer<T> : LinqParameterContainer
         {
             public TypedLinqParameterContainer(T value)
             {
