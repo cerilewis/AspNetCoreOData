@@ -94,6 +94,11 @@ namespace Microsoft.AspNetCore.OData.Query
                         context.RequestContainer)
                     : null)
         {
+            if (_queryOptionParser != null && context.RequestContainer == null)
+            {
+                // By default, let's enable the property name case-insensitive
+                _queryOptionParser.Resolver = ODataQueryContext.DefaultCaseInsensitiveResolver;
+            }
         }
 
         /// <summary>
@@ -120,6 +125,11 @@ namespace Microsoft.AspNetCore.OData.Query
         /// Gets or sets the $select and $expand query validator.
         /// </summary>
         public ISelectExpandQueryValidator Validator { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="OrderBy"/>.
+        /// </summary>
+        internal OrderByQueryOption OrderBy { get; set; }
 
         /// <summary>
         /// Gets the parsed <see cref="SelectExpandClause"/> for this query option.
@@ -211,6 +221,12 @@ namespace Microsoft.AspNetCore.OData.Query
                 binderContext.AddComputedProperties(Compute.ComputeClause.ComputedItems);
             }
 
+            if (Context.DefaultQueryConfigurations.EnableSkipToken && OrderBy != null)
+            {
+                binderContext.OrderByClauses = OrderBy.OrderByClause.ToList();
+                binderContext.EnableSkipToken = true;
+            }
+
             return binder.ApplyBind(queryable, SelectExpandClause, binderContext);
         }
 
@@ -245,6 +261,12 @@ namespace Microsoft.AspNetCore.OData.Query
             if (Compute != null)
             {
                 binderContext.AddComputedProperties(Compute.ComputeClause.ComputedItems);
+            }
+
+            if (Context.DefaultQueryConfigurations.EnableSkipToken && OrderBy != null)
+            {
+                binderContext.OrderByClauses = OrderBy.OrderByClause.ToList();
+                binderContext.EnableSkipToken = true;
             }
 
             return binder.ApplyBind(entity, SelectExpandClause, binderContext);

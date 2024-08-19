@@ -430,6 +430,7 @@ namespace Microsoft.AspNetCore.OData.Query
                 // let the IQueryable backend fail (if it has to).
 
                 orderBy = GenerateStableOrder();
+                OrderBy = orderBy; // update the orderby
             }
 
             if (IsAvailableODataQueryOption(orderBy, querySettings, AllowedQueryOptions.OrderBy))
@@ -679,6 +680,9 @@ namespace Microsoft.AspNetCore.OData.Query
                     : entityType
                         .StructuralProperties()
                         .Where(property => property.Type.IsPrimitive() && !property.Type.IsStream())
+
+                        // @discuss: Orderby the keys using the key name alphabet order doesn't make sense for me.
+                        // Since we don't have the 'Order' value, we should keep the order same as definition order in the schema?
                         .OrderBy(p => p.Name);
 
             return properties.ToList();
@@ -757,12 +761,8 @@ namespace Microsoft.AspNetCore.OData.Query
                     // Clone the given one and add the remaining properties to end, thereby making
                     // the sort stable but preserving the user's original intent for the major
                     // sort order.
-                    orderBy = new OrderByQueryOption(orderBy);
-
-                    foreach (IEdmStructuralProperty property in propertiesToAdd)
-                    {
-                        orderBy.OrderByNodes.Add(new OrderByPropertyNode(property, OrderByDirection.Ascending));
-                    }
+                    var orderByRaw = orderBy.RawValue + "," + string.Join(",", propertiesToAdd.Select(p => p.Name));
+                    orderBy = new OrderByQueryOption(orderByRaw, context);
                 }
             }
 
@@ -843,6 +843,13 @@ namespace Microsoft.AspNetCore.OData.Query
                     Context.NavigationSource,
                     queryParameters,
                     Context.RequestContainer); // the Context.RequestContainer could be null for non-edm model
+
+                if (Context.RequestContainer == null)
+                {
+                    // By default, let's enable the property name case-insensitive
+                    _queryOptionParser.Resolver = ODataQueryContext.DefaultCaseInsensitiveResolver;
+                }
+
                 var originalSelectExpand = SelectExpand;
                 SelectExpand = new SelectExpandQueryOption(
                     autoSelectRawValue,
@@ -1097,6 +1104,11 @@ namespace Microsoft.AspNetCore.OData.Query
                     newSelectExpand.Compute = Compute;
                 }
 
+                if (Context.DefaultQueryConfigurations.EnableSkipToken && OrderBy != null)
+                {
+                    newSelectExpand.OrderBy = OrderBy;
+                }
+
                 var type = typeof(T);
                 if (type == typeof(IQueryable))
                 {
@@ -1155,7 +1167,7 @@ namespace Microsoft.AspNetCore.OData.Query
             else
             {
                 // By default, let's enable the property name case-insensitive
-                _queryOptionParser.Resolver = new ODataUriResolver { EnableCaseInsensitive = true };
+                _queryOptionParser.Resolver = ODataQueryContext.DefaultCaseInsensitiveResolver;
             }
 
             BuildQueryOptions(normalizedQueryParameters);

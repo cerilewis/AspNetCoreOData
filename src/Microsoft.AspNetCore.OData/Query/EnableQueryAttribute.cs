@@ -137,19 +137,19 @@ namespace Microsoft.AspNetCore.OData.Query
                 }
 
                 IEdmType elementType = edmType.AsElementType();
-                if (elementType.IsUntyped())
-                {
-                    // TODO: so far, we don't know how to process query on Edm.Untyped.
-                    // So, if the query data type is Edm.Untyped, or collection of Edm.Untyped,
-                    // Let's simply skip it now.
-                    return null;
-                }
-
                 IEdmModel edmModel = request.GetModel();
 
                 // For Swagger metadata request. elementType is null.
                 if (elementType == null || edmModel == null)
                 {
+                    return null;
+                }
+
+                if (elementType.IsUntyped())
+                {
+                    // TODO: so far, we don't know how to process query on Edm.Untyped.
+                    // So, if the query data type is Edm.Untyped, or collection of Edm.Untyped,
+                    // Let's simply skip it now.
                     return null;
                 }
 
@@ -656,7 +656,7 @@ namespace Microsoft.AspNetCore.OData.Query
         }
 
         /// <summary>
-        /// Get the ODaya query context.
+        /// Get the OData query context.
         /// </summary>
         /// <param name="responseValue">The response value.</param>
         /// <param name="singleResultCollection">The content as SingleResult.Queryable.</param>
