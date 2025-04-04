@@ -4,43 +4,6 @@
         <name>Microsoft.AspNetCore.OData</name>
     </assembly>
     <members>
-        <member name="M:Microsoft.AspNetCore.OData.Abstracts.ContainerBuilderExtensions.AddDefaultWebApiServices(Microsoft.OData.IContainerBuilder)">
-            <summary>
-            Injects the default Web API OData services.
-            </summary>
-            <param name="builder">The container builder.</param>
-            <returns>The calling itself.</returns>
-        </member>
-        <member name="T:Microsoft.AspNetCore.OData.Abstracts.DefaultContainerBuilder">
-            <summary>
-            The default container builder implementation based on the Microsoft dependency injection framework.
-            </summary>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Abstracts.DefaultContainerBuilder.AddService(Microsoft.OData.ServiceLifetime,System.Type,System.Type)">
-            <summary>
-            Adds a service of <paramref name="serviceType"/> with an <paramref name="implementationType"/>.
-            </summary>
-            <param name="lifetime">The lifetime of the service to register.</param>
-            <param name="serviceType">The type of the service to register.</param>
-            <param name="implementationType">The implementation type of the service.</param>
-            <returns>The <see cref="T:Microsoft.OData.IContainerBuilder"/> instance itself.</returns>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Abstracts.DefaultContainerBuilder.AddService(Microsoft.OData.ServiceLifetime,System.Type,System.Func{System.IServiceProvider,System.Object})">
-            <summary>
-            Adds a service of <paramref name="serviceType"/> with an <paramref name="implementationFactory"/>.
-            </summary>
-            <param name="lifetime">The lifetime of the service to register.</param>
-            <param name="serviceType">The type of the service to register.</param>
-            <param name="implementationFactory">The factory that creates the service.</param>
-            <returns>The <see cref="T:Microsoft.OData.IContainerBuilder"/> instance itself.</returns>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Abstracts.DefaultContainerBuilder.BuildContainer">
-            <summary>
-            Builds a container which implements <see cref="T:System.IServiceProvider"/> and contains
-            all the services registered.
-            </summary>
-            <returns>The container built by this builder.</returns>
-        </member>
         <member name="T:Microsoft.AspNetCore.OData.Abstracts.ETagActionFilterAttribute">
             <summary>
             Defines a <see cref="T:Microsoft.AspNetCore.Mvc.Filters.ActionFilterAttribute"/> to add an ETag header value to an OData response when the response
@@ -318,6 +281,13 @@
             Gets the data store used routing conventions to store any custom route data.
             </summary>
             <value>Initially an empty <c>IDictionary&lt;string, object&gt;</c>.</value>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Abstracts.ODataServiceCollectionExtensions.AddDefaultWebApiServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Injects the default Web API OData services.
+            </summary>
+            <param name="services">The service collection.</param>
+            <returns>The calling itself.</returns>
         </member>
         <member name="T:Microsoft.AspNetCore.OData.Abstracts.NonValidatingParameterBindingAttribute">
             <summary>
@@ -3552,6 +3522,16 @@
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Deserialization.ODataEnumDeserializer.ReadInline(System.Object,Microsoft.OData.Edm.IEdmTypeReference,Microsoft.AspNetCore.OData.Formatter.Deserialization.ODataDeserializerContext)">
             <inheritdoc />
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Deserialization.ODataEnumDeserializer.ReadFlagsEnumValue(Microsoft.OData.ODataEnumValue,Microsoft.OData.Edm.IEdmEnumType,System.Type,Microsoft.OData.ModelBuilder.ClrEnumMemberAnnotation)">
+            <summary>
+            Reads the value of a flags enum.
+            </summary>
+            <param name="enumValue">The OData enum value.</param>
+            <param name="enumType">The EDM enum type.</param>
+            <param name="clrType">The EDM enum CLR type.</param>
+            <param name="memberMapAnnotation">The annotation containing the mapping of CLR enum members to EDM enum members.</param>
+            <returns>The deserialized flags enum value.</returns>
+        </member>
         <member name="T:Microsoft.AspNetCore.OData.Formatter.Deserialization.ODataPrimitiveDeserializer">
             <summary>
             Represents an <see cref="T:Microsoft.AspNetCore.OData.Formatter.Deserialization.ODataDeserializer"/> that can read OData primitive types.
@@ -4555,7 +4535,7 @@
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataDeltaResourceSetSerializer.WriteObjectInlineAsync(System.Object,Microsoft.OData.Edm.IEdmTypeReference,Microsoft.OData.ODataWriter,Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
             <inheritdoc />
         </member>
-        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataDeltaResourceSetSerializer.GetNextLinkGenerator(Microsoft.OData.ODataDeltaResourceSet,System.Collections.IEnumerable,Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataDeltaResourceSetSerializer.GetNextLinkGenerator(Microsoft.OData.ODataResourceSetBase,System.Collections.IEnumerable,Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
             <summary>
             Creates a function that takes in an object and generates nextlink uri.
             </summary>
@@ -4580,6 +4560,16 @@
             messageWriter and the writeContext.
             </summary>
             <param name="value">The object to be written.</param>
+            <param name="writer">The <see cref="T:Microsoft.OData.ODataDeltaWriter" /> to be used for writing.</param>
+            <param name="writeContext">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext"/>.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataDeltaResourceSetSerializer.WriteDeletedResourceAsync(System.Object,Microsoft.OData.Edm.IEdmStructuredTypeReference,Microsoft.OData.ODataWriter,Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext)">
+            <summary>
+            Writes the given deltaDeletedEntry specified by the parameter graph as a part of an existing OData message using the given
+            messageWriter and the writeContext.
+            </summary>
+            <param name="value">The object to be written.</param>
+            <param name="expectedType">The expected type of the deleted resource.</param>
             <param name="writer">The <see cref="T:Microsoft.OData.ODataDeltaWriter" /> to be used for writing.</param>
             <param name="writeContext">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext"/>.</param>
         </member>
@@ -4680,6 +4670,14 @@
             <param name="enumType">The EDM enum type of the value.</param>
             <param name="writeContext">The serializer write context.</param>
             <returns>The created <see cref="T:Microsoft.OData.ODataEnumValue"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataEnumSerializer.GetFlagsEnumValue(System.Enum,Microsoft.OData.ModelBuilder.ClrEnumMemberAnnotation)">
+            <summary>
+            Gets the combined names of the flags set in a Flags enum value.
+            </summary>
+            <param name="graphEnum">The enum value.</param>
+            <param name="memberMapAnnotation">The annotation containing the mapping of CLR enum members to EDM enum members.</param>
+            <returns>A comma-separated string of the names of the flags that are set.</returns>
         </member>
         <member name="T:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataErrorSerializer">
             <summary>
@@ -4794,6 +4792,14 @@
             <param name="writer">The ODataWriter.</param>
             <returns>A task that represents the asynchronous write operation</returns>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.WriteResourceContent(Microsoft.OData.ODataWriter,Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
+            <summary>
+            Writes the context of a Resource
+            </summary>
+            <param name="writer">The <see cref="T:Microsoft.OData.ODataWriter" /> to use to write the resource contents</param>
+            <param name="selectExpandNode">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode"/> describing the response graph.</param>
+            <param name="resourceContext">The context for the resource instance being written.</param>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.CreateSelectExpandNode(Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
             <summary>
             Creates the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode"/> that describes the set of properties and actions to select and expand while writing this entity.
@@ -4811,7 +4817,35 @@
             <param name="resourceContext">The context for the resource instance being written.</param>
             <returns>The created <see cref="T:Microsoft.OData.ODataResource"/>.</returns>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.CreateDeletedResource(System.Uri,Microsoft.OData.DeltaDeletedEntryReason,Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
+            <summary>
+            Creates the <see cref="T:Microsoft.OData.ODataResource"/> to be written while writing this resource.
+            </summary>
+            <param name="id">The id of the Deleted Resource to be written (may be null if properties contains all key properties)</param>
+            <param name="reason">The <see cref="T:Microsoft.OData.DeltaDeletedEntryReason"/> for the removal of the resource.</param>
+            <param name="selectExpandNode">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode"/> describing the response graph.</param>
+            <param name="resourceContext">The context for the resource instance being written.</param>
+            <returns>The created <see cref="T:Microsoft.OData.ODataResource"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.InitializeODataResource(Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode,Microsoft.OData.ODataResourceBase,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
+            <summary>
+            Initializes an ODataResource to be written
+            </summary>
+            <param name="selectExpandNode">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode"/> describing the response graph.</param>
+            <param name="resource">The resource that will be initialized</param>
+            <param name="resourceContext">The context for the resource instance being written.</param>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.AppendDynamicProperties(Microsoft.OData.ODataResource,Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
+            <summary>
+            Appends the dynamic properties of primitive, enum or the collection of them into the given <see cref="T:Microsoft.OData.ODataResource"/>.
+            If the dynamic property is a property of the complex or collection of complex, it will be saved into
+            the dynamic complex properties dictionary of <paramref name="resourceContext"/> and be written later.
+            </summary>
+            <param name="resource">The <see cref="T:Microsoft.OData.ODataResource"/> describing the resource.</param>
+            <param name="selectExpandNode">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode"/> describing the response graph.</param>
+            <param name="resourceContext">The context for the resource instance being written.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.AppendDynamicPropertiesInternal(Microsoft.OData.ODataResourceBase,Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
             <summary>
             Appends the dynamic properties of primitive, enum or the collection of them into the given <see cref="T:Microsoft.OData.ODataResource"/>.
             If the dynamic property is a property of the complex or collection of complex, it will be saved into
@@ -4886,6 +4920,15 @@
             <param name="navigationProperty">The navigation property for which the navigation link is being created.</param>
             <param name="resourceContext">The context for the entity instance being written.</param>
             <returns>The navigation link to be written.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.CreateStructuralPropertyBag(Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
+            <summary>
+            Creates the <see cref="T:Microsoft.OData.ODataProperty"/>s to be written while writing this entity.
+            </summary>
+            <param name="selectExpandNode">The <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.SelectExpandNode" /> to determine the properties to be written</param>
+            <param name="resourceContext">The context for the entity instance being written.</param>
+            <returns>The navigation link to be written.</returns>
+            <returns>ODataProperties to be written</returns>
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataResourceSerializer.CreateComputedProperty(System.String,Microsoft.AspNetCore.OData.Formatter.ResourceContext)">
             <summary>
@@ -5080,7 +5123,7 @@
             <summary>
             Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext"/> class.
             </summary>
-            <param name="resource">The resource whose property is being nested.</param>
+            <param name="resource">The context for the resource instance being written</param>
             <param name="selectExpandClause">The <see cref="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.SelectExpandClause"/> for the property being nested.</param>
             <param name="edmProperty">The complex property being nested or the navigation property being expanded.
             If the resource property is the dynamic complex, the resource property is null.
@@ -5091,7 +5134,7 @@
             <summary>
             Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext"/> class for nested resources.
             </summary>
-            <param name="resource">The resource whose property is being nested.</param>
+            <param name="resourceContext">The context for the resource instance being written.</param>
             <param name="edmProperty">The complex property being nested or the navigation property being expanded.
             If the resource property is the dynamic complex, the resource property is null.
             </param>
@@ -5121,6 +5164,11 @@
         <member name="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.Request">
             <summary>
             Gets or sets the HTTP Request whose response is being serialized.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.CancellationToken">
+            <summary>
+            Get the <see cref="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.CancellationToken"/> from <see cref="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.Request"/> if defined or <see cref="P:System.Threading.CancellationToken.None"/>
             </summary>
         </member>
         <member name="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.RootElementName">
@@ -5182,6 +5230,11 @@
         <member name="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.SelectExpandClause">
             <summary>
             Gets or sets the <see cref="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.SelectExpandClause"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.IsDelta">
+            <summary>
+            Gets or sets a value indicating whether a delta payload is being serialized.
             </summary>
         </member>
         <member name="P:Microsoft.AspNetCore.OData.Formatter.Serialization.ODataSerializerContext.CurrentExpandedSelectItem">
@@ -5708,27 +5761,6 @@
             Returning DeltaKind of the object within DeltaResourceSet payload
             </summary>
         </member>
-        <member name="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection">
-            <summary>
-            Represents an <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.IEdmObject"/> that is a collection of <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.IEdmEntityObject"/>s.
-            </summary>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection.#ctor(Microsoft.OData.Edm.IEdmCollectionTypeReference)">
-            <summary>
-            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection"/> class.
-            </summary>
-            <param name="edmType">The edm type of the collection.</param>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection.#ctor(Microsoft.OData.Edm.IEdmCollectionTypeReference,System.Collections.Generic.IList{Microsoft.AspNetCore.OData.Formatter.Value.IEdmEntityObject})">
-            <summary>
-            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection"/> class.
-            </summary>
-            <param name="edmType">The edm type of the collection.</param>
-            <param name="list">The list that is wrapped by the new collection.</param>
-        </member>
-        <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection.GetEdmType">
-            <inheritdoc/>
-        </member>
         <member name="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObject">
             <summary>
             Represents an <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.IEdmEntityObject"/> with no backing CLR <see cref="T:System.Type"/>.
@@ -5752,6 +5784,27 @@
             </summary>
             <param name="edmType">The <see cref="T:Microsoft.OData.Edm.IEdmEntityType"/> of this object.</param>
             <param name="isNullable">true if this object can be nullable; otherwise, false.</param>
+        </member>
+        <member name="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection">
+            <summary>
+            Represents an <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.IEdmObject"/> that is a collection of <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.IEdmEntityObject"/>s.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection.#ctor(Microsoft.OData.Edm.IEdmCollectionTypeReference)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection"/> class.
+            </summary>
+            <param name="edmType">The edm type of the collection.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection.#ctor(Microsoft.OData.Edm.IEdmCollectionTypeReference,System.Collections.Generic.IList{Microsoft.AspNetCore.OData.Formatter.Value.IEdmEntityObject})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection"/> class.
+            </summary>
+            <param name="edmType">The edm type of the collection.</param>
+            <param name="list">The list that is wrapped by the new collection.</param>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmEntityObjectCollection.GetEdmType">
+            <inheritdoc/>
         </member>
         <member name="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmEnumObject">
             <summary>
@@ -5824,7 +5877,7 @@
             Method to determine whether the current type is a Delta resource set.
             </summary>
             <param name="type">IEdmType to be compared</param>
-            <returns>True or False if type is same as <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmDeltaCollectionType"/></returns>
+            <returns>True or False if type is a <see cref="T:Microsoft.AspNetCore.OData.Formatter.Value.EdmDeltaCollectionType"/> or a <see cref="T:Microsoft.AspNetCore.OData.Deltas.IDeltaSet"/></returns>
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Formatter.Value.EdmTypeExtensions.IsDeltaResource(Microsoft.AspNetCore.OData.Formatter.Value.IEdmObject)">
             <summary>
@@ -7078,11 +7131,6 @@
               Looks up a localized string similar to The Uri &apos;{0}&apos; in the parameter is invalid..
             </summary>
         </member>
-        <member name="P:Microsoft.AspNetCore.OData.SRResources.EntitySetMissingDuringSerialization">
-            <summary>
-              Looks up a localized string similar to The related entity set could not be found from the OData path. The related entity set is required to serialize the payload..
-            </summary>
-        </member>
         <member name="P:Microsoft.AspNetCore.OData.SRResources.EntityTypeMismatch">
             <summary>
               Looks up a localized string similar to The entity type &apos;{0}&apos; does not match the expected entity type &apos;{1}&apos; as set on the query context..
@@ -7271,6 +7319,11 @@
         <member name="P:Microsoft.AspNetCore.OData.SRResources.MissingNonODataContainer">
             <summary>
               Looks up a localized string similar to Cannot find the services container for the non-OData route. This can occur when using OData components on the non-OData route and is usually a configuration issue. Call EnableDependencyInjection() to enable OData components on non-OData routes. This may also occur when a request was mistakenly handled by the ASP.NET Core routing layer instead of the OData routing layer, for instance the URL does not include the OData route prefix configured via a call to MapODataServiceRoute()..
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.OData.SRResources.MissingNonStandardTypeSupportFor">
+            <summary>
+              Looks up a localized string similar to Missing non-standard type support for &apos;{0}&apos;..
             </summary>
         </member>
         <member name="P:Microsoft.AspNetCore.OData.SRResources.MissingODataContainer">
@@ -7726,6 +7779,11 @@
         <member name="P:Microsoft.AspNetCore.OData.SRResources.TypeMustBeEnumOrNullableEnum">
             <summary>
               Looks up a localized string similar to The type &apos;{0}&apos; must be an enum or Nullable&lt;T&gt; where T is an enum type..
+            </summary>
+        </member>
+        <member name="P:Microsoft.AspNetCore.OData.SRResources.TypeMustBeOpenType">
+            <summary>
+              Looks up a localized string similar to The type &apos;{0}&apos; must be an open type. The dynamic properties container property is only expected on open types..
             </summary>
         </member>
         <member name="P:Microsoft.AspNetCore.OData.SRResources.TypeMustBeRelated">
@@ -8698,7 +8756,7 @@
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.EnableQueryAttribute.GetODataQueryContext(System.Object,System.Linq.IQueryable,Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor,Microsoft.AspNetCore.Http.HttpRequest)">
             <summary>
-            Get the ODaya query context.
+            Get the OData query context.
             </summary>
             <param name="responseValue">The response value.</param>
             <param name="singleResultCollection">The content as SingleResult.Queryable.</param>
@@ -9261,6 +9319,15 @@
             <param name="context">The query binder context.</param>
             <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindCollectionOpenPropertyAccessNode(Microsoft.OData.UriParser.CollectionOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Binds a <see cref="T:Microsoft.OData.UriParser.CollectionPropertyAccessNode"/> to create a LINQ <see cref="T:System.Linq.Expressions.Expression"/> that
+            represents the semantics of the <see cref="T:Microsoft.OData.UriParser.CollectionPropertyAccessNode"/>.
+            </summary>
+            <param name="openCollectionNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindDynamicPropertyAccessQueryNode(Microsoft.OData.UriParser.SingleValueOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
             <summary>
             Binds a <see cref="T:Microsoft.OData.UriParser.SingleValueOpenPropertyAccessNode"/> to create a LINQ <see cref="T:System.Linq.Expressions.Expression"/> that
@@ -9426,7 +9493,15 @@
             <summary>
             Gets property for dynamic properties dictionary.
             </summary>
-            <param name="openNode"></param>
+            <param name="openNode">The single-valued open property access node.</param>
+            <param name="context">The query binder context.</param>
+            <returns>Returns CLR property for dynamic properties container.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.GetDynamicPropertyContainer(Microsoft.OData.UriParser.CollectionOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Gets property for dynamic properties dictionary.
+            </summary>
+            <param name="openCollectionNode">The collection-valued open property access node.</param>
             <param name="context">The query binder context.</param>
             <returns>Returns CLR property for dynamic properties container.</returns>
         </member>
@@ -9438,12 +9513,116 @@
             <param name="context">The query binder context.</param>
             <returns>Returns null if no aggregations were used so far</returns>
         </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindPropertyAccessExpression(Microsoft.OData.UriParser.SingleValueNode,System.Reflection.PropertyInfo,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Binds property to the source node.
+            </summary>
+            <param name="sourceNode">The source node.</param>
+            <param name="prop">The property.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.GetDynamicPropertyContainer(Microsoft.OData.Edm.IEdmTypeReference,Microsoft.OData.UriParser.QueryNodeKind,Microsoft.OData.Edm.IEdmModel)">
+            <summary>
+            Gets property for dynamic properties dictionary.
+            </summary>
+            <param name="edmTypeReference">The Edm type reference.</param>
+            <param name="queryNodeKind">Query node kind.</param>
+            <param name="model">The Edm model.</param>
+            <returns>Returns CLR property for dynamic properties container.</returns>
+        </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.ApplyNullPropagationForFilterBody(System.Linq.Expressions.Expression,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
             <summary>
             Apply null propagation for filter body.
             </summary>
             <param name="body">The body.</param>
             <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindDynamicPropertyAccessExpression(Microsoft.OData.UriParser.SingleValueOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Binds dynamic property to the source node.
+            </summary>
+            <param name="openNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.CreateDynamicPropertyAccessExpression(System.Linq.Expressions.Expression,System.String,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Creates an expression for retrieving a dynamic property from the container property.
+            </summary>
+            <param name="containerPropertyAccessExpr">The container property access expression.</param>
+            <param name="propertyName">The dynamic property name.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindNestedDynamicPropertyAccessExpression(Microsoft.OData.UriParser.SingleValueOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Binds nested dynamic property to the source node.
+            </summary>
+            <param name="openNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.CreateNestedDynamicPropertyAccessExpression(System.Linq.Expressions.Expression,Microsoft.OData.UriParser.SingleValueOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Creates an expression for retrieving a nested dynamic property.
+            </summary>
+            <param name="sourceExpr">The source expression.</param>
+            <param name="openNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindCollectionOpenPropertyAccessExpression(Microsoft.OData.UriParser.CollectionOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Binds dynamic collection property to the source node.
+            </summary>
+            <param name="openCollectionNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindNestedCollectionOpenPropertyAccessExpression(Microsoft.OData.UriParser.CollectionOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Binds nested dynamic collection property to the source node.
+            </summary>
+            <param name="openCollectionNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.CreateNestedCollectionOpenPropertyAccessExpression(System.Linq.Expressions.Expression,Microsoft.OData.UriParser.CollectionOpenPropertyAccessNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Creates an expression for retrieving a nested dynamic collection property.
+            </summary>
+            <param name="sourceExpr">The source expression.</param>
+            <param name="openCollectionNode">The query node to bind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.CreateNestedDynamicPropertyAccessExpression(System.Linq.Expressions.Expression,System.String,Microsoft.OData.UriParser.QueryNodeKind,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">
+            <summary>
+            Creates an expression for retrieving a dynamic property from the container property.
+            </summary>
+            <param name="sourceExpr">The source expression.</param>
+            <param name="propertyName">The property name.</param>
+            <param name="queryNodeKind">The query node kind.</param>
+            <param name="context">The query binder context.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.CreateResourceTypeNotInModelExceptionExpression(System.Linq.Expressions.Expression)">
+            <summary>
+            Creates an <see cref="T:Microsoft.OData.ODataException"/> for the scenario where resource type is not in the Edm model.
+            </summary>
+            <param name="instanceTypeExpr">The resource instance type expression.</param>
+            <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.CreatePropertyIsNotCollectionExceptionExpression(System.Linq.Expressions.Expression,System.Linq.Expressions.Expression,System.String)">
+            <summary>
+            Creates an <see cref="T:Microsoft.OData.ODataException"/> for the scenario where
+            any/any operators are applied to a property that is not a collection.
+            </summary>
+            <param name="instanceTypeExpr">The resource instance type expression.</param>
+            <param name="propertyTypeExpr">The property type expression.</param>
+            <param name="propertyName">The property name.</param>
             <returns>The LINQ <see cref="T:System.Linq.Expressions.Expression"/> created.</returns>
         </member>
         <member name="M:Microsoft.AspNetCore.OData.Query.Expressions.QueryBinder.BindSingleValueFunctionCallNode(Microsoft.OData.UriParser.SingleValueFunctionCallNode,Microsoft.AspNetCore.OData.Query.Expressions.QueryBinderContext)">

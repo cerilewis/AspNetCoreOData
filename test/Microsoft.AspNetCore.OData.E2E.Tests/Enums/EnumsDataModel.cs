@@ -9,78 +9,100 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Microsoft.AspNetCore.OData.E2E.Tests.Enums
+namespace Microsoft.AspNetCore.OData.E2E.Tests.Enums;
+
+public class Employee
 {
-    public class Employee
-    {
-        public int ID { get; set; }
+    public int ID { get; set; }
 
-        public string Name { get; set; }
+    public string Name { get; set; }
 
-        public List<Skill> SkillSet { get; set; }
+    public List<Skill> SkillSet { get; set; }
 
-        public Gender Gender { get; set; }
+    public Gender Gender { get; set; }
 
-        public AccessLevel AccessLevel { get; set; }
+    public AccessLevel AccessLevel { get; set; }
 
-        public FavoriteSports FavoriteSports { get; set; }
-    }
+    public EmployeeType EmployeeType { get; set; }
 
-    [Flags]
-    public enum AccessLevel
-    {
-        Read = 1,
+    public FavoriteSports FavoriteSports { get; set; }
+}
 
-        Write = 2,
+[Flags]
+public enum AccessLevel
+{
+    None = 0,
 
-        Execute = 4
-    }
+    Read = 1,
 
-    public enum Gender
-    {
-        Male = 1,
+    Write = 2,
 
-        Female = 2
-    }
+    Execute = 4,
 
-    public enum Skill
-    {
-        CSharp,
+    Admin = 7 // Read | Write | Execute
+}
 
-        Sql,
+[Flags]
+[DataContract(Name = "employeeType")]
+public enum EmployeeType
+{
+    [EnumMember(Value = "full time")]
+    FullTime = 1,
 
-        Web,
-    }
+    [EnumMember(Value = "Part Time")]
+    PartTime = 2,
 
-    public enum Sport
-    {
-        Pingpong,
+    [EnumMember(Value = "contract")]
+    Contract = 4,
 
-        Basketball
-    }
+    [EnumMember(Value = "intern")]
+    Intern = 8
+}
 
-    public class FavoriteSports
-    {
-        public Sport LikeMost { get; set; }
-        public List<Sport> Like { get; set; }
-    }
+public enum Gender
+{
+    Male = 1,
 
-    [DataContract]
-    public enum Status
-    {
-        [EnumMember(Value = "Sold out")]
-        SoldOut,
+    Female = 2
+}
 
-        [EnumMember(Value = "In store")]
-        InStore
-    }
+public enum Skill
+{
+    CSharp,
 
-    public class WeatherForecast
-    {
-        public int Id { get; set; }
+    Sql,
 
-        public Status Status { get; set; }
+    Web,
+}
 
-        public Skill Skill { get; set; }
-    }
+public enum Sport
+{
+    Pingpong,
+
+    Basketball
+}
+
+public class FavoriteSports
+{
+    public Sport LikeMost { get; set; }
+    public List<Sport> Like { get; set; }
+}
+
+[DataContract]
+public enum Status
+{
+    [EnumMember(Value = "Sold out")]
+    SoldOut,
+
+    [EnumMember(Value = "In store")]
+    InStore
+}
+
+public class WeatherForecast
+{
+    public int Id { get; set; }
+
+    public Status Status { get; set; }
+
+    public Skill Skill { get; set; }
 }

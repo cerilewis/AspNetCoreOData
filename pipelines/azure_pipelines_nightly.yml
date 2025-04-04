@@ -4,6 +4,7 @@ schedules:
   branches:
     include:
     - main
+    - dev-9.x
 resources:
   repositories:
   - repository: self
@@ -23,6 +24,8 @@ variables:
   value: anycpu
 - name: ProductBinPath
   value: $(Build.SourcesDirectory)\bin\$(BuildPlatform)\$(BuildConfiguration)
+- group: OData-ESRP-CodeSigning
+
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
@@ -67,18 +70,9 @@ extends:
             versionSpec: '>=5.2.0'
             checkLatest: true
         - task: UseDotNet@2
-          displayName: Use .NET Core SDK 3.1
+          displayName: Use .NET Core SDK 8.x
           inputs:
-            version: 3.x
-        - task: UseDotNet@2
-          displayName: Use .NET Core SDK 5.x
-          inputs:
-            version: 5.x
-            includePreviewVersions: true
-        - task: UseDotNet@2
-          displayName: Use .NET Core SDK 6.x
-          inputs:
-            version: 6.x
+            version: 8.x
             includePreviewVersions: true
         - task: DotNetCoreCLI@2
           displayName: Build Microsoft.AspNetCore.OData
@@ -133,10 +127,16 @@ extends:
           displayName: Use .NET Core SDK 2.x
           inputs:
             version: 2.x
-        - task: EsrpCodeSigning@1
+        - task: EsrpCodeSigning@5
           displayName: ESRP CodeSigning - WebAPI OData Product Signing
           inputs:
-            ConnectedServiceName: 'ESRP CodeSigning - OData'
+            ConnectedServiceName: $(ODataEsrpConnectionServiceName)
+            AppRegistrationClientId: '$(ODataEsrpAppRegistrationClientId)'
+            AppRegistrationTenantId: '$(ODataEsrpAppRegistrationTenantId)'
+            AuthAKVName: $(ODataEsrpAuthAKVName)
+            AuthCertName: $(ODataEsrpAuthCertName)
+            AuthSignCertName: $(ODataEsrpAuthSignCertName)
+            ServiceEndpointUrl: '$(ODataEsrpServiceEndpointUrl)'
             FolderPath: $(ProductBinPath)
             Pattern: Microsoft.AspNetCore.OData.dll,Microsoft.AspNetCore.OData.NewtonsoftJson.dll
             signConfigType: inlineSignParams
@@ -224,10 +224,16 @@ extends:
           inputs:
             command: custom
             arguments: pack $(Build.SourcesDirectory)\src\Microsoft.AspNetCore.OData.NewtonsoftJson.Release.nuspec -NonInteractive -OutputDirectory $(Build.ArtifactStagingDirectory)\Nuget -Properties Configuration=$(BuildConfiguration);ProductRoot=$(ProductBinPath);SourcesRoot=$(Build.SourcesDirectory);VersionFullSemantic=$(VersionFullSemantic);NightlyBuildVersion=$(VersionNugetNightlyBuild);VersionNuGetSemantic=$(VersionNuGetSemantic) -Verbosity Detailed -Symbols  -SymbolPackageFormat snupkg
-        - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
+        - task: EsrpCodeSigning@5
           displayName: ESRP CodeSigning - WebAPI OData Packages Signing
           inputs:
-            ConnectedServiceName: ESRP CodeSigning - OData
+            ConnectedServiceName: $(ODataEsrpConnectionServiceName)
+            AppRegistrationClientId: '$(ODataEsrpAppRegistrationClientId)'
+            AppRegistrationTenantId: '$(ODataEsrpAppRegistrationTenantId)'
+            AuthAKVName: $(ODataEsrpAuthAKVName)
+            AuthCertName: $(ODataEsrpAuthCertName)
+            AuthSignCertName: $(ODataEsrpAuthSignCertName)
+            ServiceEndpointUrl: '$(ODataEsrpServiceEndpointUrl)'
             FolderPath: $(Build.ArtifactStagingDirectory)\Nuget
             Pattern: '*.nupkg'
             signConfigType: inlineSignParams
